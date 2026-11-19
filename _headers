@@ -1,0 +1,9 @@
+# Cache longevo para imagens estáticas
+/imagens/*
+  Cache-Control: public, max-age=2592000, immutable
+
+/styles.css
+  Cache-Control: public, max-age=86400
+
+/portal.js
+  Cache-Control: public, max-age=86400

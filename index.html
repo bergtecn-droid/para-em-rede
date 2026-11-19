@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pará em Rede | Notícias do Pará</title>
+<meta name="description" content="Notícias de Castanhal e do Pará: política, polícia, cidades, esportes, saúde e geral. Rádio ao vivo, vídeos e galeria de fotos. Pará em Rede — informação da nossa região.">
+<link rel="canonical" href="https://para-em-rede.pages.dev/">
+<meta name="theme-color" content="#071d52">
+<!-- Open Graph: cartão de compartilhamento (padrão; matérias individuais via _worker.js) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pará em Rede">
+<meta property="og:title" content="Pará em Rede | Notícias do Pará">
+<meta property="og:description" content="Notícias de Castanhal e do Pará em primeira mão. Rádio ao vivo, vídeos e fotos.">
+<meta property="og:url" content="https://para-em-rede.pages.dev/">
+<meta property="og:image" content="https://para-em-rede.pages.dev/imagens/capa.webp">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pará em Rede | Notícias do Pará">
+<meta name="twitter:image" content="https://para-em-rede.pages.dev/imagens/capa.webp">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23081d52'/%3E%3Crect x='8' y='14' width='48' height='6' rx='3' fill='%23e41220'/%3E%3Crect x='8' y='28' width='34' height='5' rx='2.5' fill='%23ffffff'/%3E%3Crect x='8' y='39' width='48' height='5' rx='2.5' fill='%23ffffff' opacity='.85'/%3E%3Crect x='8' y='50' width='26' height='5' rx='2.5' fill='%23ffffff' opacity='.7'/%3E%3C/svg%3E">
+<link rel="preload" as="style" href="styles.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <span id="today">Pará em Rede • Informação da nossa região</span>
+  <span>📍 Castanhal, Pará &nbsp;|&nbsp; <a href="admin.html" class="adminlink">Área do administrador</a></span>
+</div></div>
+
+<header class="hero" id="cover">
+  <div class="wrap hero-brand">
+    <!-- Troque src pela logo oficial quando estiver disponível (ex.: /imagens/logo.png) -->
+    <img src="/imagens/logo-portal.png" alt="Pará em Rede" onerror="this.remove()">
+    <div class="brand-text" id="heroBrandText">
+      <b>PARÁ EM REDE</b>
+      <small>Notícias do Pará</small>
+    </div>
+  </div>
+</header>
+
+<nav class="nav" aria-label="Editorias">
+  <div class="wrap navinner" id="portalNav">
+    <a href="#inicio">⌂ INÍCIO</a>
+    <a href="#noticias" data-cat="PARÁ">★ PARÁ</a>
+    <a href="#noticias" data-cat="POLÍTICA">⚖ POLÍTICA</a>
+    <a href="#noticias" data-cat="POLÍCIA">⛨ POLÍCIA</a>
+    <a href="#noticias" data-cat="CIDADES">⌖ CIDADES</a>
+    <a href="#noticias" data-cat="ESPORTES">⚽ ESPORTES</a>
+    <a href="#noticias" data-cat="SAÚDE">✚ SAÚDE</a>
+    <a href="#noticias" data-cat="GERAL">▣ GERAL</a>
+    <a href="#noticias" data-cat="BRASIL">★ BRASIL</a>
+    <a href="#videos">▶ VÍDEOS</a>
+    <a href="#fotos">▤ FOTOS</a>
+    <a href="#radio">♫ RÁDIO</a>
+  </div>
+</nav>
+
+<div class="ticker wrap" id="ticker">
+  <strong>ÚLTIMAS NOTÍCIAS ❯❯</strong>
+  <div class="marquee"><span id="tickertext"></span></div>
+  <button onclick="document.getElementById('ticker').classList.toggle('paused')" aria-label="Pausar notícias">Ⅱ</button>
+</div>
+
+<main class="wrap" id="inicio">
+  <div class="main-grid">
+    <section class="lead" id="lead" aria-label="Notícia principal">
+      <img id="leadimg" alt="Notícia em destaque" onclick="openArticle(leadIndex)" style="cursor:pointer">
+      <div class="lead-controls">
+        <button onclick="moveLead(-1)" aria-label="Notícia anterior">❮</button>
+        <button onclick="moveLead(1)" aria-label="Próxima notícia">❯</button>
+      </div>
+      <div class="lead-text">
+        <span class="tag" id="leadcat"></span>
+        <h1 id="leadtitle" tabindex="0" role="button" onclick="openArticle(leadIndex)"></h1>
+        <p id="leadsummary"></p>
+        <button class="article-back" onclick="openArticle(leadIndex)">Ler matéria completa ❯</button>
+        <div id="leadDots" class="lead-dots"></div>
+      </div>
+    </section>
+
+    <div class="stack" id="stack"></div>
+
+    <aside class="side">
+      <div class="radio" id="radio">
+        <h2>🎙 <span id="publicRadioName">Rádio CF News FM</span> <span style="font-size:11px;background:#f22;padding:5px;border-radius:5px">PLAYER</span></h2>
+        <div class="radio-controls">
+          <button id="radiobtn" onclick="toggleRadio()" aria-label="Tocar rádio">▶</button>
+          <span class="wave" aria-hidden="true">▂▅▇▃▆▂▅▇</span><span>🔊</span>
+          <input type="range" min="0" max="100" value="70" oninput="audio.volume=this.value/100" aria-label="Volume">
+        </div>
+        <small id="radiostatus">Configure uma URL de streaming no painel para ouvir.</small>
+        <audio id="audio"></audio>
+      </div>
+      <div class="weather">
+        <span class="sun" id="weathericon">🌤️</span>
+        <div><strong>Previsão do tempo</strong><div>Castanhal • PA</div><b id="temp">--°C</b>
+        <div id="weatherdesc" style="font-size:12px">Consultando...</div></div>
+      </div>
+      <div class="most"><h3>📰 Notícias recentes</h3><div id="mostlist"></div></div>
+    </aside>
+  </div>
+
+  <section class="section" id="noticias"><h2>Últimas notícias</h2><div class="newsgrid" id="newsgrid"></div></section>
+
+  <section class="section" id="editorias"><h2>Editorias do Pará</h2><div id="categorySections"></div></section>
+
+  <section class="section" id="horoscopo">
+    <h2>✦ Horóscopo do dia</h2>
+    <p id="horoscopeDate" style="color:var(--muted)">Previsões atualizadas diariamente • Entretenimento</p>
+    <div id="horoscopeGrid" class="horoscope-grid"><p>Carregando os signos...</p></div>
+    <p style="font-size:12px;color:var(--muted)">Fonte: <a href="https://sigastra.com/pt-BR/" target="_blank" rel="noopener">Sigastra</a>. Previsões astrológicas para entretenimento.</p>
+  </section>
+
+  <section class="section" id="videos">
+    <h2>▶ Vídeos e reportagens</h2>
+    <p style="margin:0 0 14px;color:var(--muted);font-size:13px">Clique em um vídeo para assistir sem sair do portal. É necessária conexão com a internet.</p>
+    <div class="medias" id="videoGrid"></div>
+  </section>
+
+  <section class="section" id="fotos"><h2>▤ Galeria de fotos</h2><div class="medias" id="photoGrid"></div></section>
+
+  <section class="sponsors">
+    <h2>🤝 Nossos patrocinadores</h2>
+    <div class="sponsor-line">
+      <button onclick="scrollSponsors(-1)" aria-label="Patrocinadores anteriores">❮</button>
+      <div class="sponsor-track" id="sponsorTrack"></div>
+      <button onclick="scrollSponsors(1)" aria-label="Próximos patrocinadores">❯</button>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="brandcol">
+      <strong>PARÁ EM REDE</strong>
+      <p>Notícias, cultura e histórias da nossa gente.</p>
+    </div>
+    <div class="cols">
+      <div>
+        <h4>Contato</h4>
+        WhatsApp: <span id="footWhats">(91) 98294-3236</span><br>
+        <a id="footWhatsLink" href="https://wa.me/5591982943236" target="_blank" rel="noopener">Falar agora no WhatsApp</a>
+      </div>
+      <div>
+        <h4>Acesso</h4>
+        <a href="admin.html">Painel administrativo</a><br>
+        <a href="#videos">Vídeos</a> · <a href="#fotos">Fotos</a> · <a href="#radio">Rádio</a>
+      </div>
+    </div>
+  </div>
+  <div class="wrap bottom">
+    <span>© <span id="year"></span> Pará em Rede • Castanhal, Pará</span>
+  </div>
+</footer>
+
+<div class="social">
+  <a class="insta" id="insta" href="#" aria-label="Instagram" title="Instagram">◎</a>
+  <a class="whats" id="whats" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">☏</a>
+</div>
+
+<div class="overlay" id="articleOverlay">
+  <article class="dialog">
+    <button class="close" onclick="closeOverlay('articleOverlay')" aria-label="Fechar reportagem">×</button>
+    <div id="articleContent"></div>
+  </article>
+</div>
+
+<div id="photoViewer" role="dialog" aria-modal="true" aria-label="Galeria de fotografias">
+  <button class="viewer-close" onclick="closePhotoViewer()" aria-label="Fechar">×</button>
+  <button class="viewer-prev" onclick="stepPhoto(-1)" aria-label="Foto anterior">‹</button>
+  <img id="viewerImage" alt="Fotografia ampliada">
+  <div class="viewer-title" id="viewerTitle"></div>
+  <div class="viewer-count" id="viewerCount"></div>
+  <div class="viewer-strip" id="viewerStrip"></div>
+  <button class="viewer-next" onclick="stepPhoto(1)" aria-label="Próxima foto">›</button>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<script src="portal.js" defer></script>
+<script>
+/* Horóscopo — carregado após o portal */
+(function(){'use strict';
+const SIGNS=[['aries','Áries','♈'],['taurus','Touro','♉'],['gemini','Gêmeos','♊'],['cancer','Câncer','♋'],['leo','Leão','♌'],['virgo','Virgem','♍'],['libra','Libra','♎'],['scorpio','Escorpião','♏'],['sagittarius','Sagitário','♐'],['capricorn','Capricórnio','♑'],['aquarius','Aquário','♒'],['pisces','Peixes','♓']];
+const escapeText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function extractReading(payload,sign){const items=payload?.items;let item=Array.isArray(items)?items.find(x=>String(x.sign||x.slug||'').toLowerCase()===sign)||items[0]:items?.[sign]||payload?.data?.[sign]||payload?.data||payload;let t=item?.summary||item?.preview||item?.text||item?.horoscope||item?.description||item?.body||'';return typeof t==='string'?t.trim():''}
+async function loadHoroscope(){
+ const grid=document.getElementById('horoscopeGrid');if(!grid)return;
+ const date=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Belem',dateStyle:'long'}).format(new Date());
+ document.getElementById('horoscopeDate').textContent='Edição de '+date+' • Entretenimento';
+ const descriptions={'aries':'21 mar – 19 abr','taurus':'20 abr – 20 mai','gemini':'21 mai – 20 jun','cancer':'21 jun – 22 jul','leo':'23 jul – 22 ago','virgo':'23 ago – 22 set','libra':'23 set – 22 out','scorpio':'23 out – 21 nov','sagittarius':'22 nov – 21 dez','capricorn':'22 dez – 19 jan','aquarius':'20 jan – 18 fev','pisces':'19 fev – 20 mar'};
+ const makeCard=(key,name,emoji,text)=>'<article class="horoscope-card"><div class="horoscope-icon" aria-hidden="true">'+emoji+'</div><div class="horoscope-sign"><h3>'+name+'</h3><span>'+descriptions[key]+'</span></div><p>'+(text?escapeText(text):'A previsão de hoje ainda não está disponível.')+'</p></article>';
+ grid.innerHTML=SIGNS.map(([key,name,emoji])=>makeCard(key,name,emoji,'Consultando a previsão de hoje…')).join('');
+ try{
+  const r=await fetch('https://sigastra.com/api/v1/daily?lang=pt-BR',{cache:'no-store',signal:AbortSignal.timeout(8500)});
+  if(!r.ok)throw Error('Serviço indisponível ('+r.status+')');
+  const data=await r.json();const readings=SIGNS.map(([key])=>extractReading(data,key));
+  if(readings.every(x=>!x))throw Error('A fonte não retornou previsões válidas');
+  grid.innerHTML=SIGNS.map(([key,name,emoji],i)=>makeCard(key,name,emoji,readings[i])).join('');
+ }catch(err){
+  grid.innerHTML=SIGNS.map(([key,name,emoji])=>makeCard(key,name,emoji,'Previsão temporariamente indisponível.')).join('');
+  const info=document.createElement('div');info.className='horoscope-status';info.setAttribute('role','status');
+  info.innerHTML='<strong>Previsões em atualização</strong><span>O serviço de horóscopo não respondeu. Tente novamente em instantes.</span><button type="button" id="retryHoroscope">Tentar novamente</button>';
+  grid.parentNode.insertBefore(info,grid);info.querySelector('button').onclick=()=>{info.remove();loadHoroscope()};
+  console.warn('Horóscopo:',err.message)
+ }
+}
+document.getElementById('year') && (document.getElementById('year').textContent=new Date().getFullYear());
+loadHoroscope();
+})();
+</script>
+</body>
+</html>
