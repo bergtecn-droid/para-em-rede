@@ -48,16 +48,16 @@ a{text-decoration:none;color:inherit}
 .nav a:first-child{background:var(--red)}
 .nav .adminlink{margin-left:auto;font-weight:700;opacity:.85}
 
-/* ---------- manchetes (ticker) ---------- */
+/* ---------- manchetes (ticker) — loop contínuo sem vão ---------- */
 .ticker{background:#fff;border-bottom:2px solid var(--line);display:flex;align-items:center;overflow:hidden;margin-bottom:18px;height:52px}
 .ticker strong{background:var(--red);color:#fff;padding:14px 20px;white-space:nowrap;flex:0 0 auto;font-size:14px}
-.ticker .marquee{overflow:hidden;flex:1;white-space:nowrap;min-width:0;height:52px;display:flex;align-items:center}
-.ticker span{display:inline-block;font-weight:800;white-space:nowrap}
+.ticker .marquee{overflow:hidden;flex:1;min-width:0;height:52px;display:flex;align-items:center}
+.ticker .ticker-track{display:flex;flex:0 0 auto;width:max-content;will-change:transform;animation:mar 60s linear infinite}
+.ticker .ticker-track span{display:inline-block;font-weight:800;white-space:nowrap;padding-right:5rem}
 .ticker button{border:0;background:#edf1f8;padding:12px;flex:0 0 auto}
-.ticker.paused span,.ticker:hover span,.ticker:focus-within span{animation-play-state:paused}
-@keyframes mar{from{transform:translateX(70vw)}to{transform:translateX(-100%)}}
-.ticker span{animation:mar 115s linear infinite}
-@media(prefers-reduced-motion:reduce){.ticker span{animation:none;white-space:normal}}
+.ticker.paused .ticker-track,.ticker:hover .ticker-track,.ticker:focus-within .ticker-track{animation-play-state:paused}
+@keyframes mar{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.ticker .ticker-track{animation:none}}
 
 /* ---------- grade principal ---------- */
 .wrap{max-width:1440px;margin:auto;padding:0 22px}
