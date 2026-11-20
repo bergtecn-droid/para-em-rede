@@ -11,7 +11,7 @@ Supabase, hospedagem no Cloudflare Pages.
 | Painel demonstrativo duplicado dentro do `index.html` (código morto) | Removido — só existe o painel real (`admin.html`) |
 | CSS com blocos V9/V10/V12/V15 duplicados e conflitantes | Um único `styles.css` limpo |
 | Sem `meta description`, sem Open Graph, sem favicon | SEO completo + cartão com foto/título ao compartilhar |
-| Compartilhamento sem prévia | Cartão bonito no WhatsApp/Facebook via `_worker.js` (rota `/m/<slug>`) |
+| Compartilhamento sem prévia | Cartão bonito no WhatsApp/Facebook via `worker.js` (rota `/m/<slug>`) |
 | 6 imagens duplicadas (~2,5 MB desperdiçados) | 20 imagens únicas, ainda guardadas por cache de 30 dias |
 
 ## Estrutura de arquivos
@@ -23,7 +23,7 @@ portal.js      → lógica do portal (notícias, galeria, rádio, clima, compart
 admin.html     → painel administrativo (login Supabase)
 admin.js       → lógica do painel
 config.js      → URL e chave PÚBLICA do Supabase
-_worker.js     → cartões de compartilhamento por matéria (Cloudflare Pages)
+worker.js      → cartões de compartilhamento por matéria (rota /m/<slug>)
 _headers       → cache de imagens (30 dias)
 imagens/       → fotos locais do portal (capa, fallbacks, logo)
 ```
@@ -61,7 +61,7 @@ Para cadastrar um administrador, insira o `user_id` (UUID do Auth) do usuário.
 ## Compartilhamento com foto (como funciona)
 
 Cada matéria tem endereço próprio: `https://para-em-rede.pages.dev/m/<slug>`.
-O `_worker.js` busca os dados da matéria no Supabase e monta o cartão.
+O `worker.js` busca os dados da matéria no Supabase e monta o cartão.
 Para o preview aparecer certinho no WhatsApp, certifique-se de que a
 reportagem tenha **foto e resumo** preenchidos no painel.
 

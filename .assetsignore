@@ -1,0 +1,11 @@
+# Arquivos do projeto que NÃO devem ser publicados como arquivos do site
+.git
+.github
+.wrangler
+node_modules
+wrangler.jsonc
+wrangler.toml
+worker.js
+README.md
+LEIA-ME.md
+.assetsignore

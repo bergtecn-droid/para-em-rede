@@ -1,0 +1,11 @@
+// Cloudflare Workers — configuração do portal Pará em Rede
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "para-em-rede",
+  "main": "worker.js",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS"
+  }
+}
