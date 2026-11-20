@@ -99,7 +99,9 @@ function render() {
     $('mostlist').innerHTML = list.slice(0, 4).map((x, i) =>
       `<button data-article="${i}"><b style="background:var(--red);color:#fff;padding:8px;border-radius:6px">${i + 1}</b>
        <img src="${safe(imageFor(x.img))}" alt="" loading="lazy">${safe(x.title)}</button>`).join('');
-    $('tickertext').textContent = list.map(x => '  \u25cf  ' + x.title + '     |     ').join('');
+    const tickerText = list.map(x => '  \u25cf  ' + x.title + '     |     ').join('');
+    $('tickertext').textContent = tickerText;
+    if ($('tickertext2')) $('tickertext2').textContent = tickerText;
   }
 
   $('videoGrid').innerHTML = videos.map((x, i) =>
@@ -328,12 +330,14 @@ async function loadPortalData() {
     const t = $('tickertext'); if (t) t.textContent = 'Não foi possível carregar as notícias. Tente atualizar a página.';
   }
 
-  // Galeria
+  // Galeria (excluindo fotos que são imagem de notícias)
   try {
+    const usedInArticle = new Set(articles.map(a => a.img).filter(x => /^https:\/\//i.test(x)));
     const { data, error } = await db.from('portal_media')
       .select('id,title,public_url').order('created_at', { ascending: false });
     if (error) throw error;
-    photos = (data || []).filter(x => /^https:\/\//i.test(x.public_url || ''))
+    photos = (data || [])
+      .filter(x => /^https:\/\//i.test(x.public_url || '') && !usedInArticle.has(x.public_url))
       .map(x => ({ title: x.title || 'Fotografia', img: x.public_url }));
   } catch (e) { console.warn('Falha ao carregar galeria:', e.message); }
 
