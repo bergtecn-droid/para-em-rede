@@ -309,10 +309,28 @@ async function weather() {
 /* ---------- Supabase: sincronização única ---------- */
 async function loadPortalData() {
   const cfg = window.PARA_CONFIG || {};
-  if (!cfg.supabaseUrl || !cfg.supabaseAnonKey || !window.supabase) {
+  if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) {
     console.warn('Pará em Rede: configure config.js com o Supabase.');
     return;
   }
+  /* Reserva: se o SDK do Supabase não carregou do CDN principal (bloqueio
+     ou falha de rede no leitor), tenta um endereço alternativo. */
+  if (!window.supabase) {
+    try {
+      await new Promise((ok, fail) => {
+        const s = document.createElement('script');
+        s.src = 'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+        s.onload = ok;
+        s.onerror = () => fail(new Error('falha ao carregar SDK reserva'));
+        document.head.appendChild(s);
+        setTimeout(() => fail(new Error('tempo esgotado')), 8000);
+      });
+    } catch (e) {
+      console.warn('Pará em Rede: não foi possível carregar o SDK do Supabase.', e.message);
+      return;
+    }
+  }
+  if (!window.supabase) return;
   const db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
   // Notícias
@@ -439,6 +457,6 @@ if (location.pathname.match(/^\/m\/([^/?#]+)/)) {
     setTimeout(() => {
       clearInterval(timer);
       if (!tryOpen()) articleNotFound();
-    }, 6000);
+    }, 15000);
   }
 }
