@@ -413,6 +413,20 @@ weather();
 loadPortalData();
 setInterval(() => { if (!$('articleOverlay').classList.contains('show')) moveLead(1); }, 8500);
 /* Reabrir matéria quando carregada por link direto /m/<slug> */
+function articleNotFound() {
+  const box = $('articleContent');
+  if (!box) return;
+  box.innerHTML =
+    '<button class="article-back" onclick="closeOverlay(\'articleOverlay\')">← Voltar\u00a0ao\u00a0portal</button>' +
+    '<div class="article-notfound">' +
+      '<div class="nf-emoji">\ud83d\udcd1</div>' +
+      '<h2>Mat\u00e9ria n\u00e3o encontrada</h2>' +
+      '<p>Este link est\u00e1 desatualizado \u2014 a mat\u00e9ria foi republicada com outro endere\u00e7o ou n\u00e3o est\u00e1 mais dispon\u00edvel.</p>' +
+      '<p><a class="nf-link" href="/">\u2192 Ver as \u00faltimas not\u00edcias</a></p>' +
+    '</div>';
+  $('articleOverlay').classList.add('show');
+}
+
 if (location.pathname.match(/^\/m\/([^/?#]+)/)) {
   const slug = decodeURIComponent(location.pathname.match(/^\/m\/([^/?#]+)/)[1]);
   const tryOpen = () => {
@@ -422,6 +436,9 @@ if (location.pathname.match(/^\/m\/([^/?#]+)/)) {
   };
   if (!tryOpen()) {
     const timer = setInterval(() => { if (tryOpen()) clearInterval(timer); }, 400);
-    setTimeout(() => clearInterval(timer), 6000);
+    setTimeout(() => {
+      clearInterval(timer);
+      if (!tryOpen()) articleNotFound();
+    }, 6000);
   }
 }
