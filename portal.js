@@ -24,6 +24,36 @@ const youtubeId = link => {
   } catch { return null; }
 };
 
+// Vídeo incorporável: YouTube, Vimeo, Facebook, TikTok ou Google Drive (retorna URL de iframe ou null)
+function videoEmbed(link) {
+  const l = String(link || '').trim(); if (!l) return null;
+  const t = /^https?:\/\//i.test(l) ? l : 'https://' + l;
+  const yt = youtubeId(t); if (yt) return 'https://www.youtube-nocookie.com/embed/' + yt + '?autoplay=1&rel=0';
+  let m = t.match(/vimeo\.com\/(?:video\/)?(\d{6,15})/); if (m) return 'https://player.vimeo.com/video/' + m[1] + '?autoplay=1';
+  m = t.match(/facebook\.com\/[\w./\-]*videos\/[\w\-\/]*/); if (m || /fb\.watch\//i.test(t)) return 'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(t) + '&show_text=false&autoplay=1';
+  m = t.match(/tiktok\.com\/@[\w.-]+\/video\/(\d+)/); if (m) return 'https://www.tiktok.com/embed/v2/' + m[1];
+  m = t.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/); if (m) return 'https://drive.google.com/file/d/' + m[1] + '/preview';
+  return null;
+}
+const videoProviderName = link => {
+  const l = String(link || '').toLowerCase();
+  if (/youtube|youtu\.be/.test(l)) return 'YOUTUBE';
+  if (/vimeo/.test(l)) return 'VIMEO';
+  if (/facebook|fb\.watch/.test(l)) return 'FACEBOOK';
+  if (/tiktok/.test(l)) return 'TIKTOK';
+  if (/drive\.google/.test(l)) return 'DRIVE';
+  return 'VÍDEO';
+};
+function videoThumb(x) {
+  const y = youtubeId(x.url);
+  if (y) return 'https://i.ytimg.com/vi/' + y + '/hqdefault.jpg';
+  let m = x.url && x.url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?id=)([\w-]{20,})/);
+  if (m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w640';
+  m = x.url && x.url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (m) return 'https://vumbnail.com/' + m[1] + '.jpg';
+  return '';
+}
+
 /* Imagens locais de apoio (chaves antigas mapeadas, sem duplicatas) */
 const ASSETS = {
   cirio: '/imagens/cirio.webp', acai: '/imagens/acai.webp', futebol: '/imagens/futebol.webp',
@@ -104,10 +134,15 @@ function render() {
     if ($('tickertext2')) $('tickertext2').textContent = tickerText;
   }
 
-  $('videoGrid').innerHTML = videos.map((x, i) =>
-    `<article class="media-card" role="button" tabindex="0" data-video="${i}">
-     <img src="${safe(youtubeId(x.url) ? `https://i.ytimg.com/vi/${youtubeId(x.url)}/hqdefault.jpg` : imageFor(x.img))}" alt="Capa do vídeo" loading="lazy">
-     <div class="content"><span class="tag">VÍDEO</span><h3>${safe(x.title)}</h3><p>▶ Assistir aqui no portal</p></div></article>`).join('');
+  $('videoGrid').innerHTML = videos.map((x, i) => {
+    const thumb = videoThumb(x);
+    const cover = thumb
+      ? `<img src="${safe(thumb)}" alt="Capa do vídeo" loading="lazy">`
+      : '<div class="video-nothumb">▶</div>';
+    return `<article class="media-card" role="button" tabindex="0" data-video="${i}">
+     ${cover}
+     <div class="content"><span class="tag">VÍDEO</span><h3>${safe(x.title)}</h3><p>▶ Assistir aqui no portal</p></div></article>`;
+  }).join('');
 
   renderPublicGallery();
 
@@ -272,12 +307,13 @@ document.addEventListener('click', e => {
   const v = e.target.closest('[data-video]');
   if (v) {
     const x = videos[+v.dataset.video]; if (!x) return;
-    const id = youtubeId(x.url);
-    if (!id) { alert('Link de vídeo inválido.'); return; }
+    const embed = videoEmbed(x.url);
+    if (!embed) { alert('Link de vídeo inválido.'); return; }
+    const pv = videoProviderName(x.url);
     $('articleContent').innerHTML =
       `<button class="article-back" onclick="closeOverlay('articleOverlay')">← Voltar aos vídeos</button>
-       <div class="video-player-box"><span class="tag">VÍDEO • YOUTUBE</span><h1>${safe(x.title)}</h1>
-       <iframe title="${safe(x.title)}" src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" loading="eager"
+       <div class="video-player-box"><span class="tag">VÍDEO • ${safe(pv)}</span><h1>${safe(x.title)}</h1>
+       <iframe title="${safe(x.title)}" src="${safe(embed)}" loading="eager"
         referrerpolicy="strict-origin-when-cross-origin" style="width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`;
     $('articleOverlay').classList.add('show');
@@ -378,7 +414,7 @@ async function loadPortalData() {
         url: String(v.youtube_url || v.url || '').trim(),
         order: Number(v.sort_order ?? 0)
       }))
-      .filter(v => youtubeId(v.url)).sort((a, b) => a.order - b.order);
+      .filter(v => v.url && /^https?:\/\//i.test(v.url)).sort((a, b) => a.order - b.order);
   } catch (e) { console.warn('Falha ao carregar vídeos:', e.message); }
 
   // Patrocinadores

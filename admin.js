@@ -17,7 +17,7 @@ function clearArticle(){$('articleForm').reset();$('articleId').value='';$('arti
 $('resetArticle').onclick=clearArticle;$('resetVideo').onclick=clearVideo;$('resetSponsor').onclick=clearSponsor;
 $('tabs').onclick=e=>{let b=e.target.closest('button[data-tab]');if(!b)return;document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(x=>show(x.id,x.id===b.dataset.tab))};
 $('articleForm').onsubmit=async e=>{e.preventDefault();let id=val('articleId'),title=val('articleTitle');const file=$('articlePhotoFile').files[0];let imageUrl=val('articleImage');const submit=$('articleForm').querySelector('[type=submit]');submit.disabled=true;try{if(file){if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>10*1024*1024)throw Error('A foto deve ser JPG, PNG ou WebP e ter até 10 MB.');$('articlePhotoProgress').textContent='Enviando fotografia, aguarde...';const path=crypto.randomUUID()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');requireOk(await db.storage.from('portal-imagens').upload(path,file,{contentType:file.type,upsert:false}));const {data}=db.storage.from('portal-imagens').getPublicUrl(path);imageUrl=data.publicUrl;$('articleImage').value=imageUrl;$('articlePhotoProgress').textContent='Fotografia enviada com sucesso.';}if(imageUrl&&!safeUrl(imageUrl))throw Error('A fotografia precisa ter um endereço HTTPS válido.');}catch(err){note('Erro ao enviar a fotografia: '+err.message,true);submit.disabled=false;return}let obj={title,slug:id?(cache.articles.find(x=>x.id===id)?.slug||slugify(title)):slugify(title)+'-'+Date.now().toString(36),category:val('articleCat'),summary:val('articleSummary'),body:val('articleBody'),image_url:imageUrl||null,status:val('articleStatus'),updated_at:new Date().toISOString()};try{requireOk(id?await db.from('portal_articles').update(obj).eq('id',id):await db.from('portal_articles').insert(obj));clearArticle();note('Reportagem salva no Supabase.');await refresh()}catch(err){note(err.message,true)}finally{submit.disabled=false}};
-$('videoForm').onsubmit=async e=>{e.preventDefault();let id=val('videoId'),url=val('videoUrl');if(!/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(url)){note('Use um link válido do YouTube.',true);return}let obj={title:val('videoTitle'),youtube_url:url,sort_order:Number(val('videoOrder'))||0};try{requireOk(id?await db.from('portal_videos').update(obj).eq('id',id):await db.from('portal_videos').insert(obj));clearVideo();note('Vídeo salvo.');await refresh()}catch(err){note(err.message,true)}};
+$('videoForm').onsubmit=async e=>{e.preventDefault();let id=val('videoId'),url=val('videoUrl');if(!/^https:\/\/([\w.-]*\.)?(youtube\.com|youtu\.be|vimeo\.com|facebook\.com|fb\.watch|tiktok\.com|drive\.google\.com)\//i.test(url)){note('Use um link válido do YouTube, Vimeo, Facebook, TikTok ou Google Drive ( começa com https:// ).',true);return}let obj={title:val('videoTitle'),youtube_url:url,sort_order:Number(val('videoOrder'))||0};try{requireOk(id?await db.from('portal_videos').update(obj).eq('id',id):await db.from('portal_videos').insert(obj));clearVideo();note('Vídeo salvo.');await refresh()}catch(err){note(err.message,true)}};
 $('sponsorPhotoFile').addEventListener('change',()=>{const file=$('sponsorPhotoFile').files[0];const preview=$('sponsorPreview');if(!file){preview.style.display='none';preview.removeAttribute('src');return}if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>10*1024*1024){$('sponsorPhotoFile').value='';preview.style.display='none';note('Selecione JPG, PNG ou WebP de até 10 MB.',true);return}const reader=new FileReader();reader.onload=()=>{preview.src=reader.result;preview.style.display='block'};reader.readAsDataURL(file)});
 $('sponsorForm').onsubmit=async e=>{e.preventDefault();const id=val('sponsorId'),file=$('sponsorPhotoFile').files[0],submit=$('sponsorForm').querySelector('button[type=submit]');let imageUrl=val('sponsorImage');submit.disabled=true;try{if(file){if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>10*1024*1024)throw Error('A imagem deve ser JPG, PNG ou WebP e ter até 10 MB.');$('sponsorPhotoProgress').textContent='Enviando logomarca...';const path='patrocinadores/'+crypto.randomUUID()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');requireOk(await db.storage.from('portal-imagens').upload(path,file,{contentType:file.type,upsert:false}));const {data}=db.storage.from('portal-imagens').getPublicUrl(path);imageUrl=data.publicUrl;$('sponsorPhotoProgress').textContent='Logomarca enviada.'}if(imageUrl&&!safeUrl(imageUrl))throw Error('O endereço da imagem precisa começar com https://.');if(!imageUrl)throw Error('Escolha uma imagem ou informe uma URL HTTPS antes de salvar.');const website=val('sponsorUrl');if(website&&!safeUrl(website))throw Error('O site/Instagram deve começar com https://.');const obj={title:val('sponsorTitle'),image_url:imageUrl,website_url:website||null,sort_order:Number(val('sponsorOrder'))||0};requireOk(id?await db.from('portal_sponsors').update(obj).eq('id',id):await db.from('portal_sponsors').insert(obj));clearSponsor();note('Patrocinador e imagem salvos no Supabase.');await refresh()}catch(err){$('sponsorPhotoProgress').textContent='Falha ao salvar. Verifique a mensagem acima.';note('Erro no patrocinador: '+err.message,true)}finally{submit.disabled=false}};
 $('setCoverFile').addEventListener('change',()=>{const file=$('setCoverFile').files[0];if(!file)return;const preview=$('coverPreview');preview.src=URL.createObjectURL(file);preview.style.display='block';$('coverProgress').textContent='Imagem selecionada; clique em Salvar configurações para enviar.'});
@@ -88,6 +88,58 @@ if (bodyToolbar && bodyEl) {
       bodyEl.value = blocks.join('\n');
       note('Texto organizado em parágrafos! Confira antes de salvar. Use Ctrl+Z se quiser voltar.');
     }
+  });
+}
+// Cópia de segurança (baixar/ restaurar) — Pará em Rede
+const BACKUP_TABLES = ['portal_articles','portal_media','portal_videos','portal_sponsors','portal_settings'];
+const btnBackupDownload = $('btnBackupDownload');
+if (btnBackupDownload) {
+  btnBackupDownload.onclick = async () => {
+    try {
+      btnBackupDownload.disabled = true;
+      $('backupProgress').textContent = 'Recolhendo dados...';
+      const dump = { app: 'para-em-rede', exported_at: new Date().toISOString(), tables: {} };
+      let totalRows = 0;
+      for (const table of BACKUP_TABLES) {
+        const { data, error } = await db.from(table).select('*');
+        if (error) throw error;
+        dump.tables[table] = data || [];
+        totalRows += (data || []).length;
+      }
+      const blob = new Blob([JSON.stringify(dump, null, 1)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'backup-para-em-rede-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(link); link.click(); link.remove();
+      $('backupProgress').textContent = '✅ Cópia baixada: ' + totalRows + ' registros. Guarde o arquivo no seu computador.';
+    } catch (err) { $('backupProgress').textContent = ''; note('Erro ao baixar cópia: ' + err.message, true); }
+    finally { btnBackupDownload.disabled = false; }
+  };
+}
+const btnBackupRestore = $('btnBackupRestore');
+if (btnBackupRestore) {
+  btnBackupRestore.onclick = () => $('backupFile').click();
+  $('backupFile').addEventListener('change', async e => {
+    const file = e.target.files[0]; if (!file) return;
+    try {
+      const dump = JSON.parse(await file.text());
+      if (!dump || !dump.tables) throw new Error('Arquivo de cópia inválido (não contém os dados esperados).');
+      const total = Object.values(dump.tables).reduce((n, arr) => n + (Array.isArray(arr) ? arr.length : 0), 0);
+      if (!window.confirm('Isso vai reinserir ' + total + ' registros do arquivo (reportagens, fotos, vídeos, patrocinadores e configurações). Registros com o mesmo número de identificação serão sobrescritos pela cópia. Continuar?')) { e.target.value = ''; return; }
+      btnBackupRestore.disabled = true;
+      let okCount = 0, failMsg = '';
+      for (const table of BACKUP_TABLES) {
+        const rows = dump.tables[table];
+        if (!Array.isArray(rows) || rows.length === 0) continue;
+        try { requireOk(await db.from(table).upsert(rows)); okCount += rows.length; }
+        catch (err2) { failMsg += (failMsg ? '; ' : '') + table + ': ' + err2.message; }
+      }
+      if (failMsg) { note('Restauração parcial (' + okCount + ' registros). Falhas: ' + failMsg, true); }
+      else { note('✅ Restauração concluída: ' + okCount + ' registros de volta. Abra o portal para conferir.'); }
+      $('backupProgress').textContent = 'Cópia aplicada: ' + okCount + ' registros.' + (failMsg ? ' (falhas: ' + failMsg + ')' : '');
+      await refresh();
+    } catch (err) { note('Erro ao restaurar: ' + err.message, true); }
+    finally { btnBackupRestore.disabled = false; e.target.value = ''; }
   });
 }
 start();})();
