@@ -62,7 +62,11 @@ export default {
           if (/<\s*(p|h[1-6]\b|ul\b|ol\b|li\b|blockquote\b|table\b|pre\b|div\b|figure\b)/i.test(t)) return t;
           const norm = t.replace(/\r\n/g, '\n').trim();
           if (!norm) return '';
-          return norm.split(/\n{2,}/).map(b => '<p>' + b.split('\n').map(esc).join('<br>') + '</p>').join('\n');
+          return norm.split(/\n{2,}/).map(b => {
+            const trimmed = b.trim();
+            if (/^<img\s[\s\S]*>$/i.test(trimmed)) return trimmed; // foto inserida no meio da matéria
+            return '<p>' + b.split('\n').map(esc).join('<br>') + '</p>';
+          }).join('\n');
         };
         const paras = fmtBody(a.body || a.summary || '');
         const waText = '📰 PARÁ EM REDE\n\n*' + (a.title || '') + '*\n\n' +
