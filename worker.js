@@ -57,7 +57,14 @@ export default {
         const d = a.created_at ? new Date(a.created_at) : new Date();
         const dataTxt = d.getUTCDate() + ' de ' + MESES[d.getUTCMonth()] + ' de ' + d.getUTCFullYear();
         const image = /^https:\/\//i.test(a.image_url || '') ? a.image_url : url.origin + '/imagens/capa.webp';
-        const paras = String(a.body || a.summary || '').split(/\n\s*\n|\n/).filter(Boolean);
+        const fmtBody = (raw) => {
+          const t = String(raw == null ? '' : raw);
+          if (/<\s*(p|h[1-6]\b|ul\b|ol\b|li\b|blockquote\b|table\b|pre\b|div\b|figure\b)/i.test(t)) return t;
+          const norm = t.replace(/\r\n/g, '\n').trim();
+          if (!norm) return '';
+          return norm.split(/\n{2,}/).map(b => '<p>' + b.split('\n').map(esc).join('<br>') + '</p>').join('\n');
+        };
+        const paras = fmtBody(a.body || a.summary || '');
         const waText = '📰 PARÁ EM REDE\n\n*' + (a.title || '') + '*\n\n' +
           (a.summary || 'Confira a reportagem completa.') + '\n\n🔗 ' + pageUrl;
         const waHref = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(waText);
@@ -125,7 +132,7 @@ export default {
           (a.summary ? '<p class="dek">' + esc(a.summary) + '</p>\n' : '') +
           '<div class="meta">Redação Pará em Rede · ' + esc(dataTxt) + '</div>\n' +
           heroImg + '\n' +
-          paras.map(p => '<p>' + esc(p) + '</p>').join('\n') + '\n' +
+          paras + '\n' +
           '<div class="share"><a class="wa" href="' + waHref + '" target="_blank" rel="noopener noreferrer">◉ Compartilhar no WhatsApp</a>' +
           '<a class="fb" href="' + fbHref + '" target="_blank" rel="noopener noreferrer">f Facebook</a>' +
           '<a href="#" onclick="navigator.clipboard.writeText(\'' + esc(pageUrl) + '\');this.textContent=\'✔ Endereço copiado!\';return false">/copiar endereço</a></div>\n' +

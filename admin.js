@@ -47,4 +47,47 @@ $('importLegacyGallery').onclick=async()=>{
 $('limparMediaUsada').onclick=async()=>{const urlsUsadas=new Set((cache.articles||[]).map(x=>x.image_url).filter(Boolean));const alvo=(cache.media||[]).filter(x=>urlsUsadas.has(x.public_url));if(!alvo.length){note('Nenhuma fotografia de matéria para limpar.');return}if(!confirm(alvo.length+' fotografia(s) que já são capa de matérias serão removidas do acervo. As matérias continuam funcionando normalmente, com as suas fotos. Continuar?'))return;const lbtn=$('limparMediaUsada');lbtn.disabled=true;$('limparProgresso').textContent='Limpando...'+0+' de '+alvo.length;let ok=0,falha=0;for(let i=0;i<alvo.length;i++){try{const deletion=await db.from('portal_media').delete().eq('id',alvo[i].id).select('id');requireOk(deletion);if(!deletion.data||!deletion.data.length)throw Error('sem confirmação');ok++}catch(er){falha++;console.warn('Falha ao remover',alvo[i].title,er.message)}$('limparProgresso').textContent='Limpando... '+(i+1)+' de '+alvo.length}lbtn.disabled=false;$('limparProgresso').textContent='Concluído: '+ok+' removida(s)'+(falha?', '+falha+' com falha (repita o botão)':'.');note('Limpeza da galeria concluída: '+ok+' foto(s) de matérias removida(s).');await refresh()};
 $('uploadMedia').onclick=async()=>{let files=[...$('mediaFiles').files];if(!files.length){note('Selecione as fotos primeiro.',true);return}let success=0;for(let file of files){try{if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>10*1024*1024)throw Error('Formato inválido ou arquivo maior que 10 MB');let path=crypto.randomUUID()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');requireOk(await db.storage.from('portal-imagens').upload(path,file,{contentType:file.type,upsert:false}));let {data}=db.storage.from('portal-imagens').getPublicUrl(path);requireOk(await db.from('portal_media').insert({title:file.name,file_path:path,public_url:data.publicUrl}));success++}catch(e){note('Falha ao enviar '+file.name+': '+e.message,true)}$('uploadProgress').textContent=`${success} de ${files.length} fotografias enviadas`;}await refresh()};
 document.addEventListener('click',async e=>{let b=e.target.closest('[data-action]');if(!b||!db)return;let {action,id}=b.dataset;const find=(k)=>(cache[k]||[]).find(x=>x.id===id);try{if(action==='editArticle'){let x=find('articles');$('articleId').value=x.id;$('articleTitle').value=x.title;if(![...$('articleCat').options].some(o=>o.value===x.category))$('articleCat').add(new Option(x.category+' (categoria antiga)',x.category));$('articleCat').value=x.category;$('articleSummary').value=x.summary;$('articleBody').value=x.body;$('articleImage').value=x.image_url||'';$('articleStatus').value=x.status;document.querySelector('[data-tab="noticias"]').click();window.scrollTo(0,0);return}if(action==='editVideo'){let x=find('videos');$('videoId').value=x.id;$('videoTitle').value=x.title;$('videoUrl').value=x.youtube_url;$('videoOrder').value=x.sort_order;document.querySelector('[data-tab="videos"]').click();return}if(action==='editSponsor'){let x=find('sponsors');$('sponsorId').value=x.id;$('sponsorTitle').value=x.title;$('sponsorImage').value=x.image_url||'';$('sponsorUrl').value=x.website_url||'';$('sponsorOrder').value=x.sort_order;$('sponsorPhotoFile').value='';$('sponsorPreview').style.display=x.image_url?'block':'none';if(x.image_url)$('sponsorPreview').src=safeUrl(x.image_url);$('sponsorPhotoProgress').textContent='Para trocar a imagem, escolha um novo arquivo.';document.querySelector('[data-tab="patrocinadores"]').click();return}if(action==='editMedia'){let x=find('media');if(!x)return;const title=prompt('Título da fotografia:',x.title||'');if(title===null)return;if(!title.trim())throw Error('Informe um título.');const url=prompt('Endereço HTTPS da imagem (para substituir, informe outro):',x.public_url||'');if(url===null)return;if(!safeUrl(url.trim()))throw Error('Informe uma URL HTTPS válida.');requireOk(await db.from('portal_media').update({title:title.trim(),public_url:url.trim()}).eq('id',id));note('Fotografia atualizada.');await refresh();return} if(action==='copyImage'||action==='useImage'){let u=find('media').public_url;if(action==='useImage'){$('articleImage').value=u;document.querySelector('[data-tab="noticias"]').click();note('Fotografia selecionada para a notícia.')}else{await navigator.clipboard.writeText(u);note('Endereço da imagem copiado.')}return}if(action.startsWith('delete')){if(!confirm('Tem certeza de que deseja excluir este item?'))return;let table={deleteArticle:'portal_articles',deleteVideo:'portal_videos',deleteSponsor:'portal_sponsors',deleteMedia:'portal_media'}[action];if(action==='deleteMedia'){let x=find('media');if(x&&cache.articles.some(t=>t.image_url===x.public_url)){if(!confirm('Esta fotografia é usada por uma reportagem. Excluir da galeria pode afetar a imagem da notícia. Deseja continuar?'))return;}}const deletion=await db.from(table).delete().eq('id',id).select('id');requireOk(deletion);if(!deletion.data||deletion.data.length===0){throw new Error('A exclusão não foi confirmada no Supabase. Verifique as permissões de DELETE (RLS) desta tabela.')}note('Item excluído do banco de dados.');await refresh()}}catch(err){note(err.message,true)}});
+// Barra de formatação do texto da reportagem (igual ao painel da Agência Bragança)
+const bodyEl = $('articleBody');
+const bodyToolbar = document.getElementById('bodyToolbar');
+if (bodyToolbar && bodyEl) {
+  bodyToolbar.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-edit]');
+    if (!btn) return;
+    e.preventDefault();
+    bodyEl.focus();
+    const start = bodyEl.selectionStart, end = bodyEl.selectionEnd;
+    const sel = bodyEl.value.slice(start, end);
+    const put = (pre, post, ph) => {
+      const inner = sel || ph;
+      bodyEl.value = bodyEl.value.slice(0, start) + pre + inner + post + bodyEl.value.slice(end);
+      const caret = start + pre.length + inner.length;
+      bodyEl.setSelectionRange(caret, caret);
+      bodyEl.focus();
+    };
+    const kind = btn.dataset.edit;
+    if (kind === 'strong') put('<strong>', '</strong>', 'texto em negrito');
+    else if (kind === 'em') put('<em>', '</em>', 'texto em itálico');
+    else if (kind === 'h3') put('<h3>', '</h3>', 'Subtítulo');
+    else if (kind === 'blockquote') put('<blockquote>', '</blockquote>', 'Citação');
+    else if (kind === 'link') {
+      const url = window.prompt('Endereço (URL) do link:', 'https://');
+      if (url) put('<a href="' + url + '" target="_blank" rel="noopener noreferrer">', '</a>', sel || 'clique aqui');
+    } else if (kind === 'list') {
+      const itemText = sel && sel.trim() ? sel : 'Item da lista';
+      const items = itemText.split('\n').map(s => '<li>' + s.trim() + '</li>').join('\n');
+      bodyEl.value = bodyEl.value.slice(0, start) + '<ul>\n' + items + '\n</ul>' + bodyEl.value.slice(end);
+    } else if (kind === 'paras') {
+      if (/<\s*(p|h[1-6]\b|ul\b|ol\b|li\b|blockquote\b|table\b|div\b|figure\b)/i.test(bodyEl.value)) {
+        window.alert('Este texto já tem formatação (parágrafos, títulos ou listas). Se apagar a formatação sem querer, use Ctrl+Z para desfazer.');
+        return;
+      }
+      const raw = bodyEl.value.replace(/\r\n/g, '\n').trim();
+      if (!raw) return;
+      const blocks = raw.split(/\n{2,}/).map(b => '<p>' + b.split('\n').join('<br>') + '</p>');
+      bodyEl.value = blocks.join('\n');
+      note('Texto organizado em parágrafos! Confira antes de salvar. Use Ctrl+Z se quiser voltar.');
+    }
+  });
+}
 start();})();
