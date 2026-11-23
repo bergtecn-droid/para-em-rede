@@ -247,3 +247,8 @@ a{text-decoration:none;color:inherit}
 .article-notfound p{max-width:420px;margin:0 auto 8px;color:#555}
 .article-notfound .nf-link{display:inline-block;margin-top:10px;color:var(--red,#c4170c);font-weight:700;text-decoration:none}
 .article-notfound .nf-link:hover{text-decoration:underline}
+
+/* ===== Vídeo sem miniatura (Vimeo/TikTok/Facebook etc.) ===== */
+.video-nothumb{display:flex;align-items:center;justify-content:center;height:135px;background:linear-gradient(135deg,#0b2b5c,#1c62b8);color:#fff;font-size:42px}
+/* ===== Backup/Restaurar (painel) ===== */
+#backupProgress{margin-top:8px}
