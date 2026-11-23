@@ -153,9 +153,18 @@ async function copyArticleLink(i) {
   }
 }
 
+// Corpo formatado: se o texto já tem tags, mantém; senão converte texto corrido em <p>/<br>
+function fmtBody(raw) {
+  const txt = String(raw == null ? '' : raw);
+  if (/<\s*(p|h[1-6]\b|ul\b|ol\b|li\b|blockquote\b|table\b|pre\b|div\b|figure\b)/i.test(txt)) return txt;
+  const norm = txt.replace(/\r\n/g, '\n').trim();
+  if (!norm) return '';
+  return norm.split(/\n{2,}/).map(b => '<p>' + b.split('\n').map(safe).join('<br>') + '</p>').join('\n');
+}
+
 function openArticle(i) {
   const a = articles[i]; if (!a) return;
-  const paras = String(a.body || a.summary || '').split(/\n\s*\n|\n/).filter(Boolean);
+  const paras = null; // substituído por fmtBody (parágrafos automáticos)
   const rel = articles.map((x, j) => ({ x, j })).filter(t => t.j !== i).slice(0, 5);
   $('articleContent').innerHTML =
     `<button class="article-back" onclick="closeOverlay('articleOverlay')">← Voltar ao portal</button>
@@ -164,7 +173,7 @@ function openArticle(i) {
        <h1>${safe(a.title)}</h1><p class="dek">${safe(a.summary)}</p>
        <div class="article-meta">Redação Pará em Rede · ${safe(a.created_at ? new Date(a.created_at).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'))}</div>
        <img class="hero-article" src="${safe(imageFor(a.img))}" alt="${safe(a.title)}">
-       <div class="article-body">${paras.map(t => `<p>${safe(t)}</p>`).join('')}</div>
+       <div class="article-body">${fmtBody(a.body || a.summary)}</div>
      </div>
      <aside class="article-side">
        <h2>Últimas notícias</h2>
