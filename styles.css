@@ -252,3 +252,5 @@ a{text-decoration:none;color:inherit}
 .video-nothumb{display:flex;align-items:center;justify-content:center;height:135px;background:linear-gradient(135deg,#0b2b5c,#1c62b8);color:#fff;font-size:42px}
 /* ===== Backup/Restaurar (painel) ===== */
 #backupProgress{margin-top:8px}
+/* ===== Fotos dentro da matéria ===== */
+.article-body img{max-width:100%;border-radius:10px;margin:8px 0}
