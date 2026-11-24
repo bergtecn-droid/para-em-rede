@@ -52,7 +52,7 @@ a{text-decoration:none;color:inherit}
 .ticker{background:#fff;border-bottom:2px solid var(--line);display:flex;align-items:center;overflow:hidden;margin-bottom:18px;height:52px}
 .ticker strong{background:var(--red);color:#fff;padding:14px 20px;white-space:nowrap;flex:0 0 auto;font-size:14px}
 .ticker .marquee{overflow:hidden;flex:1;min-width:0;height:52px;display:flex;align-items:center}
-.ticker .ticker-track{display:flex;flex:0 0 auto;width:max-content;will-change:transform;animation:mar var(--dur,60s) linear infinite}
+.ticker .ticker-track{display:flex;flex:0 0 auto;width:max-content;will-change:transform;animation:mar var(--dur,120s) linear infinite}
 .ticker .ticker-track span{display:inline-block;font-weight:800;font-size:15px;white-space:nowrap;padding-right:5rem}
 .ticker button{border:0;background:#edf1f8;padding:12px;flex:0 0 auto}
 .ticker.paused .ticker-track,.ticker:hover .ticker-track,.ticker:focus-within .ticker-track{animation-play-state:paused}
