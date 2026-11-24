@@ -136,7 +136,7 @@ function render() {
     const track = document.querySelector('.ticker-track');
     if (track) requestAnimationFrame(() => {
       const w = (track.scrollWidth || 0) / 2; // dois spans iguais lado a lado
-      const dur = Math.max(32, Math.min(260, w / 80)); // ~80px por segundo, mínimo 32s, máximo 260s
+      const dur = Math.max(55, Math.min(420, w / 45)); // ~45px por segundo — bem mais lento e legível
       track.style.setProperty('--dur', dur.toFixed(1) + 's');
     });
   }
