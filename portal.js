@@ -132,6 +132,13 @@ function render() {
     const tickerText = list.map(x => '  \u25cf  ' + x.title + '     |     ').join('');
     $('tickertext').textContent = tickerText;
     if ($('tickertext2')) $('tickertext2').textContent = tickerText;
+    // Velocidade do ticker proporcional ao tamanho do texto (fica legível em vez de "correndo")
+    const track = document.querySelector('.ticker-track');
+    if (track) requestAnimationFrame(() => {
+      const w = (track.scrollWidth || 0) / 2; // dois spans iguais lado a lado
+      const dur = Math.max(32, Math.min(260, w / 80)); // ~80px por segundo, mínimo 32s, máximo 260s
+      track.style.setProperty('--dur', dur.toFixed(1) + 's');
+    });
   }
 
   $('videoGrid').innerHTML = videos.map((x, i) => {
