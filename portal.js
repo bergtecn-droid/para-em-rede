@@ -201,7 +201,11 @@ function fmtBody(raw) {
   if (/<\s*(p|h[1-6]\b|ul\b|ol\b|li\b|blockquote\b|table\b|pre\b|div\b|figure\b)/i.test(txt)) return txt;
   const norm = txt.replace(/\r\n/g, '\n').trim();
   if (!norm) return '';
-  return norm.split(/\n{2,}/).map(b => '<p>' + b.split('\n').map(safe).join('<br>') + '</p>').join('\n');
+  return norm.split(/\n{2,}/).map(b => {
+    const trimmed = b.trim();
+    if (/^<img\s[\s\S]*>$/i.test(trimmed)) return trimmed; // foto inserida no meio da matéria
+    return '<p>' + b.split('\n').map(safe).join('<br>') + '</p>';
+  }).join('\n');
 }
 
 function openArticle(i) {
